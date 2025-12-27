@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceci est un Infostealer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #1a1c2c;
+            min-height: 100vh;
+            font-family: 'Press Start 2P', monospace;
+            color: #a7f070;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .container { 
+            max-width: 900px; 
+            width: 100%; 
+        }
+        
+        h1 {
+            font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+            text-align: center;
+            color: #b13e53;
+            text-shadow: 2px 2px #3b1725;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            text-align: center;
+            color: #566c86;
+            margin-bottom: 20px;
+        }
+        
+        .game-screen {
+            background: linear-gradient(180deg, #252a40 0%, #1a1c2c 100%);
+            border: 6px solid #333c57;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        
+        .stages { 
+            display: flex; 
+            gap: 6px; 
+            margin-bottom: 15px; 
+        }
+        
+        .stage-pill {
+            font-size: clamp(0.4rem, 1.2vw, 0.55rem);
+            padding: 10px 8px;
+            background: #1a1c2c;
+            border: 3px solid #333c57;
+            color: #566c86;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .stage-pill:hover { 
+            border-color: #566c86; 
+            transform: translateY(-2px);
+        }
+        .stage-pill.active { 
+            border-color: #38b764; 
+            color: #a7f070; 
+            background: rgba(56,183,100,0.2); 
+        }
+        .stage-pill.done { 
+            border-color: #b13e53; 
+            color: #ef7d57; 
+            background: rgba(177,62,83,0.15); 
+        }
+        
+        .canvas-wrap {
+            background: #0d0d0d;
+            border: 4px solid #333c57;
+            margin-bottom: 15px;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        .info-panel {
+            background: #0d0d0d;
+            border: 4px solid #333c57;
+            padding: 20px;
+            margin-bottom: 15px;
+            min-height: 140px;
+        }
+        
+        .info-title {
+            font-size: clamp(0.55rem, 1.8vw, 0.8rem);
+            color: #ef7d57;
+            margin-bottom: 15px;
+        }
+        
+        .info-text {
+            font-size: clamp(0.45rem, 1.4vw, 0.65rem);
+            line-height: 2;
+            color: #94b0c2;
+        }
+        
+        .info-text .r { color: #ef7d57; }
+        .info-text .g { color: #a7f070; }
+        .info-text .y { color: #ffcd75; }
+        .info-text .b { color: #73eff7; }
+        .info-text .p { color: #b55088; }
+        
+        .key-box {
+            background: rgba(177,62,83,0.15);
+            border: 3px solid #b13e53;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        
+        .key-title {
+            color: #ffcd75;
+            font-size: clamp(0.4rem, 1.2vw, 0.55rem);
+            margin-bottom: 5px;
+        }
+        
+        .controls { 
+            display: flex; 
+            gap: 12px; 
+        }
+        
+        .btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(0.45rem, 1.4vw, 0.65rem);
+            padding: 15px 20px;
+            border: none;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.1s;
+        }
+        
+        .btn:active:not(:disabled) { transform: scale(0.96); }
+        
+        .btn-prev, .btn-next {
+            background: #38b764;
+            color: #1a1c2c;
+            border: 4px solid #a7f070;
+            border-right-color: #257179;
+            border-bottom-color: #257179;
+        }
+        
+        .btn-prev:hover:not(:disabled), .btn-next:hover:not(:disabled) {
+            background: #4cc974;
+        }
+        
+        .btn-reset {
+            background: #b13e53;
+            color: #f4f4f4;
+            border: 4px solid #ef7d57;
+            border-right-color: #3b1725;
+            border-bottom-color: #3b1725;
+            flex: 0.5;
+        }
+        
+        .btn-reset:hover { background: #c94d62; }
+        
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        
+        .footer { 
+            text-align: center; 
+            font-size: clamp(0.35rem, 1vw, 0.5rem); 
+            color: #333c57; 
+            margin-top: 15px; 
+        }
+        
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .game-screen { padding: 8px; }
+            .stages { gap: 3px; }
+            .stage-pill { padding: 6px 4px; }
+            .info-panel { padding: 12px; min-height: 110px; }
+            .controls { gap: 6px; }
+            .btn { padding: 10px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ANATOMIE D'UN INFOSTEALER</h1>
+        <p class="subtitle">[ Navigation manuelle étape par étape ]</p>
+        
+        <div class="game-screen">
+            <div class="stages">
+                <div class="stage-pill" data-stage="0">INTRO</div>
+                <div class="stage-pill" data-stage="1">INFECTION</div>
+                <div class="stage-pill" data-stage="2">AV vs EDR</div>
+                <div class="stage-pill" data-stage="3">COLLECTE</div>
+                <div class="stage-pill" data-stage="4">EXFIL</div>
+                <div class="stage-pill" data-stage="5">REVENTE</div>
+                <div class="stage-pill" data-stage="6">DEFENSE</div>
+            </div>
+            
+            <div class="canvas-wrap">
+                <canvas id="gameCanvas" width="768" height="432"></canvas>
+            </div>
+            
+            <div class="info-panel">
+                <div class="info-title" id="infoTitle">INTRODUCTION</div>
+                <div class="info-text" id="infoText"></div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-prev" id="btnPrev" disabled>◄ PRÉCÉDENT</button>
+                <button class="btn btn-next" id="btnNext">SUIVANT ►</button>
+                <button class="btn btn-reset" id="btnReset">↺ RESET</button>
+            </div>
+        </div>
+        
+        <div class="footer">YPSI - Formation Cybersécurité</div>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const S = 4; // Sprite scale
+
+// Palette
+const P = {
+    black: '#0d0d0d', void: '#1a1c2c', voidLight: '#252a40',
+    purple: '#5d275d', wine: '#7e2553', darkBlue: '#3b5dc9',
+    blue: '#41a6f6', cyan: '#73eff7', white: '#f4f4f4',
+    lightGray: '#c0cbdc', gray: '#8b9bb4', darkGray: '#5a6988',
+    darkerGray: '#3a4466', darkest: '#262b44', red: '#ac3232',
+    lightRed: '#d95763', orange: '#df7126', lightOrange: '#f4a261',
+    yellow: '#fbf236', cream: '#f7d879', brown: '#8a6f30',
+    darkBrown: '#45283c', green: '#38b764', lightGreen: '#99e550',
+    darkGreen: '#257179', teal: '#29366f', skin: '#eec39a',
+    skinDark: '#d9a066', skinShade: '#8f563b', pink: '#b55088'
+};
+
+// Animation state
+let time = 0, currentStage = 0, stageTime = 0;
+let particles = [], packets = [];
+let glitchEffect = 0;
+
+// Easing
+const ease = {
+    out: t => 1 - Math.pow(1 - t, 3),
+    bounce: t => {
+        if (t < 1/2.75) return 7.5625*t*t;
+        if (t < 2/2.75) return 7.5625*(t-=1.5/2.75)*t+0.75;
+        if (t < 2.5/2.75) return 7.5625*(t-=2.25/2.75)*t+0.9375;
+        return 7.5625*(t-=2.625/2.75)*t+0.984375;
+    }
+};
+
+// Particle system
+class Particle {
+    constructor(x,y,color,vx=0,vy=0,life=60,size=4){
+        this.x=x;this.y=y;this.color=color;
+        this.vx=vx||(Math.random()-0.5)*4;
+        this.vy=vy||(Math.random()-0.5)*4;
+        this.life=life;this.maxLife=life;this.size=size;
+        this.gravity=0.12;
+    }
+    update(){this.x+=this.vx;this.y+=this.vy;this.vy+=this.gravity;this.life--;return this.life>0;}
+    draw(){ctx.globalAlpha=this.life/this.maxLife;ctx.fillStyle=this.color;ctx.fillRect(Math.floor(this.x),Math.floor(this.y),this.size,this.size);ctx.globalAlpha=1;}
+}
+
+class DataPacket {
+    constructor(x,y,tx,ty,delay=0){
+        this.x=x;this.y=y;this.sx=x;this.sy=y;this.tx=tx;this.ty=ty;
+        this.progress=0;this.delay=delay;this.active=false;this.done=false;
+        this.wobble=Math.random()*Math.PI*2;
+    }
+    update(){
+        if(this.delay>0){this.delay--;return true;}
+        this.active=true;this.progress+=0.015;this.wobble+=0.15;
+        if(this.progress>=1){
+            this.done=true;
+            for(let i=0;i<10;i++)particles.push(new Particle(this.tx,this.ty,P.lightRed,(Math.random()-0.5)*6,-Math.random()*4,50,4));
+            return false;
+        }
+        const t=ease.out(this.progress);
+        this.x=this.sx+(this.tx-this.sx)*t;
+        this.y=this.sy+(this.ty-this.sy)*t+Math.sin(this.wobble)*12;
+        return true;
+    }
+}
+
+// Sprites
+const _=null;
+const SPRITE_PC=(()=>{const K=P.black,D=P.darkest,G=P.darkerGray,L=P.darkGray,SS=P.gray,B=P.darkGreen,E=P.green,T=P.teal;return[[_,_,_,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,_,_,_],[_,_,D,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,D,_,_],[_,D,G,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,G,D,_],[_,D,L,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,L,D,_],[_,D,L,K,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,K,L,D,_],[_,D,L,K,T,B,B,B,B,B,B,B,B,B,B,B,B,B,B,T,K,L,D,_],[_,D,L,K,T,B,E,E,B,B,B,B,B,B,B,B,E,E,B,T,K,L,D,_],[_,D,L,K,T,B,E,E,B,B,B,B,B,B,B,B,E,E,B,T,K,L,D,_],[_,D,L,K,T,B,B,B,B,B,B,B,B,B,B,B,B,B,B,T,K,L,D,_],[_,D,L,K,T,B,B,B,B,B,E,E,E,B,B,B,B,B,B,T,K,L,D,_],[_,D,L,K,T,B,B,B,B,B,B,B,B,B,B,B,B,B,B,T,K,L,D,_],[_,D,L,K,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,K,L,D,_],[_,D,L,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,L,D,_],[_,D,G,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,G,D,_],[_,_,D,G,G,G,G,G,G,G,SS,SS,G,G,G,G,G,G,G,G,G,D,_,_],[_,_,_,D,D,D,D,D,D,D,L,L,D,D,D,D,D,D,D,D,D,_,_,_],[_,_,_,_,_,_,_,_,D,G,L,L,G,D,_,_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,D,G,L,L,G,D,_,_,_,_,_,_,_,_,_,_],[_,_,_,_,_,D,D,D,D,G,G,G,G,D,D,D,D,_,_,_,_,_,_,_],[_,_,_,_,D,G,G,G,G,G,G,G,G,G,G,G,G,D,_,_,_,_,_,_],[_,_,_,_,D,L,L,L,L,L,L,L,L,L,L,L,L,D,_,_,_,_,_,_],[_,_,_,_,_,D,D,D,D,D,D,D,D,D,D,D,D,_,_,_,_,_,_,_]];})();
+const SPRITE_PC_INFECTED=(()=>{const K=P.black,D=P.darkest,G=P.darkerGray,L=P.darkGray,SS=P.gray,R=P.wine,E=P.red,T=P.darkBrown;return[[_,_,_,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,D,_,_,_],[_,_,D,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,D,_,_],[_,D,G,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,G,D,_],[_,D,L,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,L,D,_],[_,D,L,K,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,K,L,D,_],[_,D,L,K,T,R,R,R,R,R,R,R,R,R,R,R,R,R,R,T,K,L,D,_],[_,D,L,K,T,R,E,E,R,R,R,R,R,R,R,R,E,E,R,T,K,L,D,_],[_,D,L,K,T,R,E,E,R,R,R,R,R,R,R,R,E,E,R,T,K,L,D,_],[_,D,L,K,T,R,R,R,R,R,R,R,R,R,R,R,R,R,R,T,K,L,D,_],[_,D,L,K,T,R,R,R,R,R,E,E,E,R,R,R,R,R,R,T,K,L,D,_],[_,D,L,K,T,R,R,R,R,R,R,R,R,R,R,R,R,R,R,T,K,L,D,_],[_,D,L,K,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,K,L,D,_],[_,D,L,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,L,D,_],[_,D,G,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,G,D,_],[_,_,D,G,G,G,G,G,G,G,SS,SS,G,G,G,G,G,G,G,G,G,D,_,_],[_,_,_,D,D,D,D,D,D,D,L,L,D,D,D,D,D,D,D,D,D,_,_,_],[_,_,_,_,_,_,_,_,D,G,L,L,G,D,_,_,_,_,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,D,G,L,L,G,D,_,_,_,_,_,_,_,_,_,_],[_,_,_,_,_,D,D,D,D,G,G,G,G,D,D,D,D,_,_,_,_,_,_,_],[_,_,_,_,D,G,G,G,G,G,G,G,G,G,G,G,G,D,_,_,_,_,_,_],[_,_,_,_,D,L,L,L,L,L,L,L,L,L,L,L,L,D,_,_,_,_,_,_],[_,_,_,_,_,D,D,D,D,D,D,D,D,D,D,D,D,_,_,_,_,_,_,_]];})();
+const SPRITE_SKULL=(()=>{const K=P.black,D=P.darkBrown,R=P.red,O=P.lightRed,W=P.white,L=P.lightGray,G=P.gray;return[[_,_,_,_,_,_,D,D,D,D,D,D,D,D,_,_,_,_,_,_],[_,_,_,_,D,D,R,R,R,R,R,R,R,R,D,D,_,_,_,_],[_,_,_,D,R,O,O,O,O,O,O,O,O,O,O,R,D,_,_,_],[_,_,D,R,O,W,W,W,O,O,O,O,W,W,W,O,R,D,_,_],[_,_,D,O,W,W,W,W,W,O,O,W,W,W,W,W,O,D,_,_],[_,D,R,O,W,L,K,K,W,O,O,W,K,K,L,W,O,R,D,_],[_,D,R,O,W,K,K,K,W,O,O,W,K,K,K,W,O,R,D,_],[_,D,R,O,W,L,K,K,W,O,O,W,K,K,L,W,O,R,D,_],[_,D,R,O,W,W,W,W,W,O,O,W,W,W,W,W,O,R,D,_],[_,D,R,O,O,O,O,O,O,O,O,O,O,O,O,O,O,R,D,_],[_,D,R,O,O,O,O,K,K,O,O,K,K,O,O,O,O,R,D,_],[_,D,R,O,O,O,O,K,K,K,K,K,K,O,O,O,O,R,D,_],[_,_,D,R,O,O,O,O,K,K,K,K,O,O,O,O,R,D,_,_],[_,_,D,R,O,O,O,O,O,O,O,O,O,O,O,O,R,D,_,_],[_,_,_,D,R,O,W,O,W,O,O,W,O,W,O,R,D,_,_,_],[_,_,_,D,R,O,W,G,W,O,O,W,G,W,O,R,D,_,_,_],[_,_,_,_,D,R,O,O,O,O,O,O,O,O,R,D,_,_,_,_],[_,_,_,_,_,D,R,R,R,R,R,R,R,R,D,_,_,_,_,_],[_,_,_,_,_,_,D,D,D,D,D,D,D,D,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]];})();
+const SPRITE_SERVER=(()=>{const K=P.black,D=P.darkest,G=P.darkerGray,L=P.darkGray,SS=P.gray,R=P.red,O=P.orange,E=P.green;return[[_,_,D,D,D,D,D,D,D,D,D,D,D,D,_,_],[_,D,G,G,G,G,G,G,G,G,G,G,G,G,D,_],[_,D,G,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,G,D,_],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,SS,K,R,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,L,L,L,L,L,L,L,L,L,L,L,L,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,SS,K,O,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,L,L,L,L,L,L,L,L,L,L,L,L,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,SS,K,E,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,E,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,L,L,L,L,L,L,L,L,L,L,L,L,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[D,G,SS,K,E,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,L,L,L,L,L,L,K,SS,G,D],[D,G,SS,K,K,K,K,K,K,K,K,K,K,SS,G,D],[_,D,G,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,G,D,_],[_,D,G,G,G,G,G,G,G,G,G,G,G,G,D,_],[_,_,D,D,D,D,D,D,D,D,D,D,D,D,_,_],[_,_,_,_,D,G,G,D,D,G,G,D,_,_,_,_],[_,_,_,D,G,L,L,G,G,L,L,G,D,_,_,_],[_,_,_,D,D,D,D,D,D,D,D,D,D,_,_,_]];})();
+const SPRITE_SHIELD=(()=>{const D=P.darkGreen,G=P.green,L=P.lightGreen,W=P.white;return[[_,_,_,_,_,D,D,D,D,D,D,D,D,_,_,_,_,_],[_,_,_,_,D,G,G,G,G,G,G,G,G,D,_,_,_,_],[_,_,_,D,G,L,L,L,L,L,L,L,L,G,D,_,_,_],[_,_,D,G,L,W,W,W,W,W,W,W,W,L,G,D,_,_],[_,D,G,L,W,W,W,W,W,W,W,W,W,W,L,G,D,_],[_,D,G,L,W,W,W,W,G,G,W,W,W,W,L,G,D,_],[_,D,G,L,W,W,W,G,G,G,G,W,W,W,L,G,D,_],[_,D,G,L,W,W,G,G,G,G,G,G,W,W,L,G,D,_],[_,D,G,L,W,W,W,G,G,G,G,W,W,W,L,G,D,_],[_,D,G,L,W,W,W,W,G,G,W,W,W,W,L,G,D,_],[_,D,G,L,W,W,W,W,W,W,W,W,W,W,L,G,D,_],[_,D,G,L,L,W,W,W,W,W,W,W,W,L,L,G,D,_],[_,_,D,G,L,L,W,W,W,W,W,W,L,L,G,D,_,_],[_,_,D,G,L,L,L,W,W,W,W,L,L,L,G,D,_,_],[_,_,_,D,G,L,L,L,W,W,L,L,L,G,D,_,_,_],[_,_,_,D,G,G,L,L,L,L,L,L,G,G,D,_,_,_],[_,_,_,_,D,G,G,L,L,L,L,G,G,D,_,_,_,_],[_,_,_,_,_,D,G,G,G,G,G,G,D,_,_,_,_,_],[_,_,_,_,_,_,D,D,G,G,D,D,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,D,D,_,_,_,_,_,_,_,_]];})();
+const SPRITE_SHIELD_SLEEP=(()=>{const D=P.darkest,G=P.darkerGray,L=P.darkGray,SS=P.gray;return[[_,_,_,_,_,D,D,D,D,D,D,D,D,_,_,_,_,_],[_,_,_,_,D,G,G,G,G,G,G,G,G,D,_,_,_,_],[_,_,_,D,G,L,L,L,L,L,L,L,L,G,D,_,_,_],[_,_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,L,G,D,_],[_,D,G,L,L,SS,SS,SS,SS,SS,SS,SS,SS,L,L,G,D,_],[_,_,D,G,L,L,SS,SS,SS,SS,SS,SS,L,L,G,D,_,_],[_,_,D,G,L,L,L,SS,SS,SS,SS,L,L,L,G,D,_,_],[_,_,_,D,G,L,L,L,SS,SS,L,L,L,G,D,_,_,_],[_,_,_,D,G,G,L,L,L,L,L,L,G,G,D,_,_,_],[_,_,_,_,D,G,G,L,L,L,L,G,G,D,_,_,_,_],[_,_,_,_,_,D,G,G,G,G,G,G,D,_,_,_,_,_],[_,_,_,_,_,_,D,D,G,G,D,D,_,_,_,_,_,_],[_,_,_,_,_,_,_,_,D,D,_,_,_,_,_,_,_,_]];})();
+const SPRITE_CHROME=(()=>{const R=P.red,G=P.green,Y=P.cream,B=P.blue,W=P.white;return[[_,_,_,_,R,R,R,R,R,R,_,_,_,_],[_,_,R,R,R,R,R,R,R,R,R,R,_,_],[_,R,R,R,R,W,W,W,W,R,R,R,R,_],[_,R,R,R,W,W,W,W,W,W,R,R,R,_],[R,R,R,W,W,W,B,B,W,W,W,G,G,R],[R,R,R,W,W,B,B,B,B,W,W,G,G,R],[R,R,R,W,W,B,B,B,B,W,W,G,G,R],[R,R,R,W,W,W,B,B,W,W,W,G,G,R],[Y,Y,R,R,W,W,W,W,W,W,G,G,G,Y],[Y,Y,Y,R,R,W,W,W,W,G,G,G,Y,Y],[_,Y,Y,Y,Y,R,R,G,G,G,G,Y,Y,_],[_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],[_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],[_,_,_,_,Y,Y,Y,Y,Y,Y,_,_,_,_]];})();
+const SPRITE_FIREFOX=(()=>{const O=P.orange,R=P.lightOrange,Y=P.cream,B=P.darkBlue,C=P.blue;return[[_,_,_,_,O,O,R,R,R,_,_,_,_,_],[_,_,_,O,O,R,R,R,R,R,_,_,_,_],[_,_,O,O,R,R,Y,R,R,R,R,_,_,_],[_,O,O,R,Y,Y,Y,R,R,R,R,R,_,_],[O,O,O,B,B,B,B,B,R,R,R,R,R,_],[O,O,B,B,C,C,C,B,B,R,R,R,R,_],[O,O,B,C,C,C,C,C,B,B,R,R,R,R],[O,O,B,C,C,C,C,C,B,B,R,R,R,R],[O,O,B,B,C,C,C,B,B,R,R,R,R,R],[_,O,O,B,B,B,B,B,R,R,R,R,R,_],[_,O,O,O,R,R,R,R,R,R,R,R,_,_],[_,_,O,O,O,R,R,R,R,R,R,_,_,_],[_,_,_,O,O,O,O,R,R,R,_,_,_,_],[_,_,_,_,_,O,O,O,_,_,_,_,_,_]];})();
+const SPRITE_EDGE=(()=>{const B=P.darkBlue,C=P.blue,L=P.cyan;return[[_,_,_,_,B,B,B,B,B,B,_,_,_,_],[_,_,B,B,B,C,C,C,C,B,B,B,_,_],[_,B,B,C,C,C,L,L,C,C,C,B,B,_],[_,B,C,C,L,L,L,L,L,L,C,C,B,_],[B,B,C,L,L,L,L,L,L,L,L,C,B,B],[B,C,C,L,L,L,L,L,L,L,L,C,C,B],[B,C,C,L,L,L,L,L,L,L,L,C,C,B],[B,C,C,L,L,L,L,L,L,L,L,C,C,B],[B,B,C,L,L,L,L,L,L,L,L,C,B,B],[_,B,C,C,L,L,L,L,L,L,C,C,B,_],[_,B,B,C,C,C,L,L,C,C,C,B,B,_],[_,_,B,B,B,C,C,C,C,B,B,B,_,_],[_,_,_,B,B,B,B,B,B,B,B,_,_,_],[_,_,_,_,_,B,B,B,B,_,_,_,_,_]];})();
+const SPRITE_KEY=(()=>{const Y=P.cream,G=P.yellow,D=P.brown,K=P.darkBrown;return[[_,_,_,_,_,_,_,_,D,D,D,_],[_,_,_,_,_,_,_,D,G,G,G,D],[_,_,_,_,_,_,_,D,G,Y,G,D],[_,_,_,_,_,_,_,D,G,G,G,D],[_,_,_,_,_,_,_,_,D,G,D,_],[_,_,_,_,_,_,D,D,D,G,D,_],[_,_,_,_,D,D,G,G,G,G,D,_],[_,_,D,D,G,G,G,D,D,D,_,_],[_,D,G,G,G,D,D,_,_,_,_,_],[D,G,Y,G,D,_,_,_,_,_,_,_],[D,G,G,D,D,_,_,_,_,_,_,_],[_,D,D,_,_,_,_,_,_,_,_,_]];})();
+const SPRITE_COOKIE=(()=>{const C=P.skinDark,L=P.skin,B=P.darkBrown;return[[_,_,_,_,C,C,C,C,_,_,_,_],[_,_,C,C,L,L,L,L,C,C,_,_],[_,C,L,B,L,L,L,L,B,L,C,_],[_,C,L,L,L,L,B,L,L,L,C,_],[C,L,L,L,L,L,L,L,L,L,L,C],[C,L,L,B,L,L,L,L,B,L,L,C],[C,L,L,L,L,L,L,L,L,L,L,C],[C,L,L,L,L,B,L,L,L,L,L,C],[_,C,L,L,L,L,L,L,B,L,C,_],[_,C,L,B,L,L,L,L,L,L,C,_],[_,_,C,C,L,L,L,L,C,C,_,_],[_,_,_,_,C,C,C,C,_,_,_,_]];})();
+const SPRITE_CARD=(()=>{const B=P.darkBlue,C=P.blue,Y=P.cream,G=P.yellow,L=P.lightGray;return[[B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B],[B,C,C,C,C,C,C,C,C,C,C,C,C,C,C,B],[B,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,B],[B,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,B],[B,C,C,C,C,C,C,C,C,C,C,C,C,C,C,B],[B,C,G,G,C,C,C,C,C,C,C,C,C,C,C,B],[B,C,G,G,C,C,C,C,C,C,C,C,C,C,C,B],[B,C,C,C,C,L,L,L,L,C,L,L,L,L,C,B],[B,C,C,C,C,C,C,C,C,C,C,C,C,C,C,B],[B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B]];})();
+const SPRITE_WALLET=(()=>{const O=P.orange,Y=P.lightOrange,G=P.cream,D=P.darkBrown;return[[_,_,_,D,D,D,D,D,D,_,_,_],[_,_,D,O,O,O,O,O,O,D,_,_],[_,D,O,Y,Y,Y,Y,Y,Y,O,D,_],[D,O,Y,Y,G,Y,Y,G,Y,Y,O,D],[D,O,Y,G,G,G,G,G,G,Y,O,D],[D,O,Y,Y,G,Y,Y,G,Y,Y,O,D],[D,O,Y,Y,G,Y,Y,G,Y,Y,O,D],[D,O,Y,G,G,G,G,G,G,Y,O,D],[D,O,Y,Y,G,Y,Y,G,Y,Y,O,D],[_,D,O,Y,Y,Y,Y,Y,Y,O,D,_],[_,_,D,O,O,O,O,O,O,D,_,_],[_,_,_,D,D,D,D,D,D,_,_,_]];})();
+const SPRITE_HACKER=(()=>{const K=P.black,D=P.darkest,G=P.darkerGray,L=P.darkGray,E=P.green,W=P.lightGreen;return[[_,_,_,_,_,_,D,D,D,D,D,D,_,_,_,_,_,_],[_,_,_,_,D,D,G,G,G,G,G,G,D,D,_,_,_,_],[_,_,_,D,G,G,G,G,G,G,G,G,G,G,D,_,_,_],[_,_,D,G,G,G,G,G,G,G,G,G,G,G,G,D,_,_],[_,_,D,G,G,G,G,G,G,G,G,G,G,G,G,D,_,_],[_,D,G,G,K,K,K,K,K,K,K,K,K,K,G,G,D,_],[_,D,G,K,K,K,K,K,K,K,K,K,K,K,K,G,D,_],[_,D,G,K,K,E,W,K,K,K,K,E,W,K,K,G,D,_],[_,D,G,K,K,E,W,K,K,K,K,E,W,K,K,G,D,_],[_,D,G,K,K,K,K,K,K,K,K,K,K,K,K,G,D,_],[_,D,G,K,K,K,K,K,K,K,K,K,K,K,K,G,D,_],[_,_,D,G,K,K,K,K,K,K,K,K,K,K,G,D,_,_],[_,_,D,G,G,K,K,K,K,K,K,K,K,G,G,D,_,_],[_,_,_,D,G,G,G,G,G,G,G,G,G,G,D,_,_,_],[_,_,D,D,G,G,G,G,G,G,G,G,G,G,D,D,_,_],[_,D,G,L,L,L,G,G,G,G,G,G,L,L,L,G,D,_],[_,D,G,L,L,L,L,G,G,G,G,L,L,L,L,G,D,_],[_,D,G,L,L,L,L,L,G,G,L,L,L,L,L,G,D,_],[_,_,D,G,L,L,L,L,G,G,L,L,L,L,G,D,_,_],[_,_,_,D,G,G,L,L,G,G,L,L,G,G,D,_,_,_],[_,_,_,_,D,D,G,G,D,D,G,G,D,D,_,_,_,_],[_,_,_,_,_,D,G,G,D,D,G,G,D,_,_,_,_,_],[_,_,_,_,D,G,L,L,D,D,L,L,G,D,_,_,_,_],[_,_,_,_,D,D,D,D,_,_,D,D,D,D,_,_,_,_]];})();
+const SPRITE_SHOP=(()=>{const P1=P.purple,P2=P.pink,W=P.white,D=P.darkest,G=P.darkerGray,L=P.darkGray,C=P.cyan,K=P.black;return[[_,_,_,_,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,_,_,_,_],[_,_,_,P1,P2,P2,P2,P2,P2,P2,P2,P2,P2,P2,P2,P2,P1,_,_,_],[_,_,P1,P2,W,W,P2,P2,P2,P2,P2,P2,P2,P2,W,W,P2,P1,_,_],[_,P1,P2,W,W,W,W,P2,P2,P2,P2,P2,P2,W,W,W,W,P2,P1,_],[P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1,P1],[D,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,D],[D,G,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,G,D],[D,G,L,C,C,C,C,L,L,L,L,L,L,C,C,C,C,L,G,D],[D,G,L,C,C,C,C,L,L,L,L,L,L,C,C,C,C,L,G,D],[D,G,L,L,L,L,L,L,K,K,K,K,L,L,L,L,L,L,G,D],[D,G,L,L,L,L,L,L,K,G,G,K,L,L,L,L,L,L,G,D],[D,G,L,L,L,L,L,L,K,G,G,K,L,L,L,L,L,L,G,D],[D,G,L,L,L,L,L,L,K,G,G,K,L,L,L,L,L,L,G,D],[D,G,L,L,L,L,L,L,K,G,G,K,L,L,L,L,L,L,G,D],[D,G,G,G,G,G,G,G,K,G,G,K,G,G,G,G,G,G,G,D],[D,D,D,D,D,D,D,D,K,K,K,K,D,D,D,D,D,D,D,D]];})();
+const SPRITE_MONEY=(()=>{const G=P.green,L=P.lightGreen,D=P.darkGreen,K=P.darkest;return[[_,K,K,K,K,K,K,K,K,K,K,K,K,K,K,_],[K,D,G,G,G,G,G,G,G,G,G,G,G,G,D,K],[K,G,L,L,L,L,G,G,G,G,L,L,L,L,G,K],[K,G,L,D,D,L,G,G,G,G,L,D,D,L,G,K],[K,G,L,D,D,L,G,G,G,G,L,D,D,L,G,K],[K,G,L,L,L,L,G,G,G,G,L,L,L,L,G,K],[K,D,G,G,G,G,G,G,G,G,G,G,G,G,D,K],[_,K,D,G,G,G,G,G,G,G,G,G,G,D,K,_],[_,_,K,D,G,G,G,G,G,G,G,G,D,K,_,_],[_,_,_,K,D,G,G,G,G,G,G,D,K,_,_,_],[_,_,_,_,K,D,D,D,D,D,D,K,_,_,_,_],[_,_,_,_,_,K,K,K,K,K,K,_,_,_,_,_]];})();
+const SPRITE_PACKET=(()=>{const R=P.red,O=P.lightRed,W=P.white,D=P.darkBrown;return[[_,_,D,R,R,R,R,R,D,_],[_,D,R,O,O,O,O,O,R,D],[D,R,O,W,W,W,W,O,O,R],[D,R,O,W,W,W,W,O,O,R],[D,R,O,O,O,O,O,O,O,R],[_,D,R,O,O,O,O,O,R,D],[_,_,D,R,R,R,R,R,D,_],[_,_,_,D,D,D,D,D,_,_]];})();
+
+// Drawing
+function drawSprite(s,x,y,sc=S){for(let py=0;py<s.length;py++)for(let px=0;px<s[py].length;px++){const c=s[py][px];if(c){ctx.fillStyle=c;ctx.fillRect(x+px*sc,y+py*sc,sc,sc);}}}
+function drawSpriteAlpha(s,x,y,sc,a){ctx.globalAlpha=a;drawSprite(s,x,y,sc);ctx.globalAlpha=1;}
+function drawLabel(t,x,y,c=P.gray,sz=16){ctx.fillStyle=c;ctx.font=sz+"px 'Press Start 2P'";ctx.fillText(t,x,y);}
+function clear(){if(glitchEffect>0){ctx.fillStyle=P.red;ctx.globalAlpha=glitchEffect*0.3;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;glitchEffect-=0.03;}else{ctx.fillStyle=P.black;ctx.fillRect(0,0,canvas.width,canvas.height);}ctx.fillStyle=P.void;for(let x=0;x<canvas.width;x+=32)for(let y=0;y<canvas.height;y+=32)ctx.fillRect(x,y,2,2);}
+
+// C2 label per stage - minimal
+const c2Info = [
+    { label: "C2", sub: "Serveur attaquant", color: P.gray },
+    { label: "C2", sub: "Envoie config >>>", color: P.orange },
+    { label: "C2", sub: "En veille", color: P.darkGray },
+    { label: "C2", sub: "En veille", color: P.darkGray },
+    { label: "C2", sub: "<<< Réception", color: P.red },
+    { label: "C2", sub: "Données stockées", color: P.pink },
+    { label: "C2", sub: "Bloqué!", color: P.green }
+];
+
+// Draw C2 server with minimal info
+function drawC2(){
+    // Server sprite
+    drawSprite(SPRITE_SERVER,650,90,S);
+    
+    // Animated LEDs
+    const leds=[[666,106],[666,134],[666,162],[666,190]];
+    const lcBase=[P.red,P.orange,P.green,P.green];
+    const ledSpeed = currentStage === 4 ? 10 : 40;
+    leds.forEach((l,i)=>{
+        if((time+i*20)%ledSpeed<ledSpeed/2){
+            ctx.fillStyle=currentStage===4?P.red:lcBase[i];
+            ctx.globalAlpha=0.9;
+            ctx.fillRect(l[0],l[1],8,8);
+            ctx.globalAlpha=0.4;
+            ctx.fillRect(l[0]-2,l[1]-2,12,12);
+        }
+    });
+    ctx.globalAlpha=1;
+    
+    // Simple C2 label
+    const info = c2Info[currentStage];
+    drawLabel(info.label, 665, 260, info.color, 12);
+    drawLabel(info.sub, 630, 280, P.darkGray, 7);
+}
+
+// Stage renderers
+function renderStage0(){
+    const pulse=Math.sin(time*0.05)*0.3+0.7;
+    
+    // Data types floating
+    const items = ["MDP", "COOKIES", "CB", "CRYPTO"];
+    for(let i=0;i<4;i++){
+        const x=180+i*110+Math.sin(time*0.03+i)*15;
+        const y=150+Math.cos(time*0.04+i*0.5)*20;
+        ctx.globalAlpha=0.5+Math.sin(time*0.05+i)*0.3;
+        ctx.fillStyle=[P.lightRed, P.orange, P.cyan, P.lightGreen][i];
+        ctx.font="14px 'Press Start 2P'";
+        ctx.fillText(items[i],x,y);
+    }
+    
+    ctx.globalAlpha=pulse;
+    ctx.fillStyle=P.lightRed;
+    ctx.font="28px 'Press Start 2P'";
+    ctx.fillText("INFOSTEALER",220,260);
+    ctx.globalAlpha=1;
+    
+    // Subtitle
+    ctx.fillStyle=P.gray;
+    ctx.font="10px 'Press Start 2P'";
+    ctx.fillText("Vol silencieux de données",260,290);
+    
+    drawLabel("Cliquez SUIVANT",250,340,P.green,12);
+    
+    const lw=160+Math.sin(time*0.1)*40;
+    ctx.fillStyle=P.green;
+    ctx.fillRect(384-lw/2,300,lw,4);
+}
+
+function renderStage1(){
+    const prog=Math.min(1,stageTime/120);
+    const sx=360-prog*240;
+    const sy=140+Math.sin(time*0.15)*10;
+    if(stageTime%5===0&&prog<1)particles.push(new Particle(sx+40,sy+40,P.red,-2,0,50,4));
+    if(prog<1){
+        ctx.fillStyle=P.red;
+        ctx.globalAlpha=0.2+Math.sin(time*0.2)*0.1;
+        ctx.beginPath();
+        ctx.arc(sx+40,sy+40,60,0,Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha=1;
+        drawSprite(SPRITE_SKULL,sx,sy,S);
+    }
+    if(prog>=1){
+        glitchEffect=Math.max(glitchEffect,0.6-(stageTime-120)*0.008);
+        if(stageTime===120)for(let i=0;i<25;i++){
+            const ang=(i/25)*Math.PI*2;
+            particles.push(new Particle(130,190,P.red,Math.cos(ang)*5,Math.sin(ang)*5,70,5));
+        }
+        const hp=Math.min(1,(stageTime-120)/30);
+        if(hp<1)drawSpriteAlpha(SPRITE_SKULL,70,150,2,1-hp);
+    }
+    if(prog>=0.8){
+        ctx.globalAlpha=Math.sin(time*0.2)*0.5+0.5;
+        drawLabel("! INFECTÉ !",300,220,P.lightRed,18);
+        ctx.globalAlpha=1;
+    }
+    
+    // Show config download from C2 after infection
+    if(prog >= 1 && stageTime > 150){
+        ctx.strokeStyle = P.orange;
+        ctx.setLineDash([6, 6]);
+        ctx.lineDashOffset = time;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(640, 190);
+        ctx.lineTo(140, 190);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        drawLabel("Récup config...", 320, 180, P.orange, 9);
+    }
+}
+
+function renderStage2(){
+    const sp=Math.min(1,stageTime/60);
+    const slp=Math.min(1,Math.max(0,(stageTime-80)/40));
+    const sy=280+(1-ease.bounce(sp))*100;
+    
+    // Sleeping AV (left side)
+    if(slp<1)drawSprite(SPRITE_SHIELD,30,sy,S);
+    else{
+        drawSprite(SPRITE_SHIELD_SLEEP,30,sy,S);
+        for(let i=0;i<3;i++){
+            const zx=110+i*16+Math.sin(time*0.1+i)*6;
+            const zy=290-i*20+Math.cos(time*0.15+i)*4;
+            ctx.globalAlpha=0.3+i*0.2;
+            drawLabel("Z",zx,zy,P.gray,12+i*4);
+        }
+        ctx.globalAlpha=1;
+    }
+    drawLabel("AV",45,390,P.darkGray,14);
+    
+    // AV speech bubble
+    if(stageTime>60){
+        ctx.globalAlpha=Math.min(1,(stageTime-60)/30);
+        ctx.fillStyle=P.darkest;
+        ctx.fillRect(120,300,140,50);
+        ctx.strokeStyle=P.darkGray;
+        ctx.lineWidth=2;
+        ctx.strokeRect(120,300,140,50);
+        ctx.fillStyle=P.darkest;
+        ctx.beginPath();
+        ctx.moveTo(120,325);
+        ctx.lineTo(105,335);
+        ctx.lineTo(120,335);
+        ctx.fill();
+        drawLabel("RAS...",140,330,P.gray,12);
+        ctx.globalAlpha=1;
+    }
+    
+    // Stealer behavior explanation (center)
+    if(stageTime>100){
+        ctx.fillStyle=P.darkest;
+        ctx.fillRect(200,130,200,90);
+        ctx.strokeStyle=P.orange;
+        ctx.lineWidth=2;
+        ctx.strokeRect(200,130,200,90);
+        drawLabel("COMPORTEMENT",210,155,P.orange,9);
+        drawLabel("Lecture fichiers",210,175,P.gray,8);
+        drawLabel("= 100% légal",210,195,P.green,8);
+        drawLabel("Comme Chrome!",210,215,P.gray,7);
+    }
+    
+    // Hidden skull
+    if(stageTime>80){
+        const sa=0.35+Math.sin(time*0.1)*0.15;
+        drawSpriteAlpha(SPRITE_SKULL,280,250,2,sa);
+        drawLabel("Actif mais invisible",260,310,P.darkGray,7);
+    }
+    
+    // EDR (right side) - detects!
+    if(stageTime>140){
+        const ep=Math.min(1,(stageTime-140)/40);
+        const ey=280+(1-ease.bounce(ep))*80;
+        
+        // EDR shield (green, active)
+        drawSprite(SPRITE_SHIELD,480,ey,S);
+        drawLabel("EDR",500,390,P.green,14);
+        
+        // EDR speech bubble - detection
+        if(stageTime>180){
+            const dp=Math.min(1,(stageTime-180)/30);
+            ctx.globalAlpha=dp;
+            ctx.fillStyle=P.darkest;
+            ctx.fillRect(420,300,150,55);
+            ctx.strokeStyle=P.green;
+            ctx.lineWidth=2;
+            ctx.strokeRect(420,300,150,55);
+            
+            // Alert icon
+            const blink = Math.sin(time*0.3)>0;
+            if(blink){
+                ctx.fillStyle=P.orange;
+                ctx.beginPath();
+                ctx.arc(435,327,8,0,Math.PI*2);
+                ctx.fill();
+                drawLabel("!",432,332,P.black,10);
+            }
+            
+            drawLabel("Accès",450,320,P.orange,8);
+            drawLabel("suspects",450,340,P.orange,8);
+            ctx.globalAlpha=1;
+        }
+    }
+}
+
+function renderStage3(){
+    // Browsers being scanned
+    drawSprite(SPRITE_CHROME,200,30,S);
+    drawSprite(SPRITE_FIREFOX,290,30,S);
+    drawSprite(SPRITE_EDGE,380,30,S);
+    
+    // Scan line effect
+    const scanY=30+(time*3%80);
+    ctx.fillStyle=P.red;
+    ctx.globalAlpha=0.6;
+    ctx.fillRect(196,scanY,64,4);
+    ctx.fillRect(286,scanY,64,4);
+    ctx.fillRect(376,scanY,64,4);
+    ctx.globalAlpha=1;
+    
+    // Corner brackets pulsing
+    const cp=Math.sin(time*0.15)*0.5+0.5;
+    ctx.strokeStyle=P.red;
+    ctx.lineWidth=3;
+    ctx.globalAlpha=cp;
+    [200,290,380].forEach(x=>{
+        ctx.beginPath();
+        ctx.moveTo(x-4,46);
+        ctx.lineTo(x-4,26);
+        ctx.lineTo(x+16,26);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x+60,70);
+        ctx.lineTo(x+60,90);
+        ctx.lineTo(x+40,90);
+        ctx.stroke();
+    });
+    ctx.globalAlpha=1;
+    
+    // Data items appearing
+    const items=[
+        {s:SPRITE_KEY,l:"MDP",desc:"Login Data",d:30},
+        {s:SPRITE_COOKIE,l:"COOKIES",desc:"Sessions",d:60},
+        {s:SPRITE_CARD,l:"CB",desc:"Web Data",d:90},
+        {s:SPRITE_WALLET,l:"CRYPTO",desc:"Wallets",d:120}
+    ];
+    items.forEach((it,i)=>{
+        if(stageTime>it.d){
+            const ip=Math.min(1,(stageTime-it.d)/30);
+            const x=160,y=250+i*44;
+            const ox=(1-ease.out(ip))*60;
+            drawSpriteAlpha(it.s,x-ox,y,S,ip);
+            if(ip>=1&&stageTime%20===0)particles.push(new Particle(x+30,y+20,P.lightRed,3,-2,40,4));
+            const stolen=stageTime>it.d+50;
+            drawLabel(it.l,x+60,y+28,stolen?P.lightRed:P.gray,11);
+            if(stolen){
+                drawLabel("COPIÉ",x+150,y+28,P.red,9);
+            }
+        }
+    });
+    
+    // Stealer skull working
+    drawSprite(SPRITE_SKULL,80,110+Math.sin(time*0.1)*6,2);
+    
+    // Timer showing speed
+    if(stageTime > 60){
+        const secs = Math.min(5, Math.floor((stageTime-60)/30));
+        drawLabel(secs+"s",100,180,P.orange,10);
+    }
+}
+
+function renderStage4(){
+    if(stageTime===1){
+        packets=[];
+        for(let i=0;i<8;i++)packets.push(new DataPacket(160,170+Math.random()*40,620,180,i*30));
+    }
+    
+    // Main data line
+    ctx.strokeStyle=P.red;
+    ctx.lineWidth=4;
+    ctx.setLineDash([16,8]);
+    ctx.lineDashOffset=-time*3;
+    ctx.beginPath();
+    ctx.moveTo(140,190);
+    ctx.lineTo(640,190);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Glow effect on line
+    const gp=(time*4)%520;
+    ctx.fillStyle=P.lightRed;
+    ctx.globalAlpha=0.5;
+    ctx.fillRect(140+gp,186,40,8);
+    ctx.globalAlpha=1;
+    
+    // Update and draw packets
+    packets=packets.filter(p=>p.update());
+    packets.forEach(p=>{
+        if(p.active&&!p.done){
+            drawSprite(SPRITE_PACKET,p.x,p.y,S);
+            if(time%3===0)particles.push(new Particle(p.x,p.y+16,P.red,-2,0,25,3));
+        }
+    });
+    
+    // Progress counter
+    const sent=8-packets.filter(p=>!p.done).length;
+    drawLabel("Envoi: "+sent+"/8",300,280,P.lightRed,12);
+    
+    // Encryption info
+    if(stageTime>30){
+        ctx.fillStyle=P.darkest;
+        ctx.fillRect(180,310,180,55);
+        ctx.strokeStyle=P.orange;
+        ctx.lineWidth=2;
+        ctx.strokeRect(180,310,180,55);
+        drawLabel("1.ZIP",195,335,P.gray,9);
+        drawLabel("2.AES",195,355,P.gray,9);
+        drawLabel("3.POST",280,345,P.cyan,9);
+    }
+    
+    // HTTPS label
+    drawLabel("HTTPS", 450, 170, P.cyan, 12);
+    drawLabel(">>>", 520, 170, P.gray, 10);
+}
+
+function renderStage5(){
+    // Hacker appears
+    const hp=Math.min(1,stageTime/40);
+    const hx=180+(1-ease.out(hp))*100;
+    drawSprite(SPRITE_HACKER,hx,80,S);
+    
+    // Blinking eyes
+    if(time%120<10){
+        ctx.fillStyle=P.black;
+        ctx.fillRect(hx+20,108,12,8);
+        ctx.fillRect(hx+44,108,12,8);
+    }
+    drawLabel("ATTAQUANT",hx-5,200,P.lightGray,9);
+    
+    // Darknet shop appears
+    if(stageTime>40){
+        const sp=Math.min(1,(stageTime-40)/40);
+        const sy=80+(1-ease.bounce(sp))*60;
+        drawSprite(SPRITE_SHOP,450,sy,S);
+        drawLabel("DARKNET",462,sy+90,P.pink,9);
+    }
+    
+    // Money cascade
+    if(stageTime>80){
+        for(let i=0;i<4;i++){
+            const d=i*12;
+            const mp=Math.min(1,Math.max(0,(stageTime-80-d)/30));
+            if(mp>0){
+                const mx=320+i*35;
+                const my=280+(1-ease.bounce(mp))*50-i*8;
+                drawSpriteAlpha(SPRITE_MONEY,mx,my,S,mp);
+            }
+        }
+        if(stageTime%12===0)particles.push(new Particle(400,280,P.lightGreen,(Math.random()-0.5)*4,-3,50,4));
+    }
+    
+    // Price examples
+    if(stageTime>100){
+        const prices=[
+            {t:"Netflix: 3€",c:P.gray},
+            {t:"PayPal: 15€",c:P.cream},
+            {t:"Entreprise: 500€",c:P.orange}
+        ];
+        ctx.fillStyle=P.darkest;
+        ctx.fillRect(140,290,160,100);
+        ctx.strokeStyle=P.pink;
+        ctx.lineWidth=2;
+        ctx.strokeRect(140,290,160,100);
+        drawLabel("PRIX LOGS",155,315,P.pink,8);
+        
+        prices.forEach((p,i)=>{
+            const pa=Math.min(1,(stageTime-100-i*20)/20);
+            if(pa>0){
+                ctx.globalAlpha=pa;
+                drawLabel(p.t,155,340+i*18,p.c,7);
+            }
+        });
+        ctx.globalAlpha=1;
+    }
+    
+    // Timeline
+    if(stageTime>140){
+        ctx.fillStyle=P.darkest;
+        ctx.fillRect(350,350,230,45);
+        ctx.strokeStyle=P.red;
+        ctx.lineWidth=2;
+        ctx.strokeRect(350,350,230,45);
+        drawLabel("Infection → Vente",365,375,P.gray,8);
+        drawLabel("= quelques heures",365,392,P.lightRed,7);
+    }
+}
+
+function renderStage6(){
+    // Title
+    const tp = Math.min(1, stageTime/30);
+    ctx.globalAlpha = tp;
+    ctx.fillStyle = P.green;
+    ctx.font = "20px 'Press Start 2P'";
+    ctx.fillText("PROTECTION", 280, 50);
+    ctx.globalAlpha = 1;
+    
+    // Recommendations with icons
+    const recos = [
+        { icon: "⊘", text: "PAS DE CRACKS", sub: "Source #1 infection", color: P.red, delay: 30 },
+        { icon: "🔐", text: "MDP EXTERNE", sub: "Bitwarden, 1Password", color: P.cyan, delay: 60 },
+        { icon: "🔑", text: "2FA MATERIEL", sub: "Yubikey > SMS/TOTP", color: P.yellow, delay: 90 },
+        { icon: "🛡", text: "EDR", sub: "Pas juste un AV", color: P.green, delay: 120 },
+        { icon: "💳", text: "CB NON SAUVEES", sub: "Jamais dans Chrome", color: P.orange, delay: 150 },
+        { icon: "📧", text: "VIGILANCE EMAIL", sub: "PJ suspectes", color: P.pink, delay: 180 }
+    ];
+    
+    recos.forEach((r, i) => {
+        if(stageTime > r.delay){
+            const rp = Math.min(1, (stageTime - r.delay) / 25);
+            const col = i < 3 ? 0 : 1;
+            const row = i % 3;
+            const x = 80 + col * 320;
+            const y = 90 + row * 110;
+            const ox = (1 - ease.out(rp)) * (col === 0 ? -50 : 50);
+            
+            ctx.globalAlpha = rp;
+            
+            // Box
+            ctx.fillStyle = P.darkest;
+            ctx.fillRect(x + ox, y, 280, 90);
+            ctx.strokeStyle = r.color;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x + ox, y, 280, 90);
+            
+            // Checkmark animation
+            if(rp >= 1){
+                const pulse = Math.sin(time * 0.1 + i) * 0.2 + 0.8;
+                ctx.globalAlpha = pulse;
+                ctx.fillStyle = P.green;
+                ctx.font = "24px 'Press Start 2P'";
+                ctx.fillText("✓", x + ox + 10, y + 55);
+            }
+            
+            ctx.globalAlpha = rp;
+            
+            // Text
+            drawLabel(r.text, x + ox + 45, y + 35, r.color, 11);
+            drawLabel(r.sub, x + ox + 45, y + 60, P.gray, 8);
+            
+            ctx.globalAlpha = 1;
+        }
+    });
+    
+    // Particles for protected feeling
+    if(stageTime > 200 && stageTime % 20 === 0){
+        particles.push(new Particle(384 + (Math.random()-0.5)*300, 400, P.lightGreen, (Math.random()-0.5)*2, -2, 60, 3));
+    }
+}
+
+// Main render
+function render(){
+    time++;
+    stageTime++;
+    clear();
+    
+    // PC and C2 only on stages 0-5
+    if(currentStage < 6){
+        // PC
+        const pcS=currentStage>=1?SPRITE_PC_INFECTED:SPRITE_PC;
+        if(currentStage>=1&&time%30<2)ctx.globalAlpha=0.8;
+        drawSprite(pcS,40,130,S);
+        ctx.globalAlpha=1;
+        drawLabel("VICTIME",32,240,P.gray,12);
+        
+        // C2 Server with dynamic info
+        drawC2();
+    }
+    
+    // Stage specific rendering
+    switch(currentStage){
+        case 0:renderStage0();break;
+        case 1:renderStage1();break;
+        case 2:renderStage2();break;
+        case 3:renderStage3();break;
+        case 4:renderStage4();break;
+        case 5:renderStage5();break;
+        case 6:renderStage6();break;
+    }
+    
+    // Particles
+    particles=particles.filter(p=>p.update());
+    particles.forEach(p=>p.draw());
+    
+    requestAnimationFrame(render);
+}
+
+// Info - Focus on stealer behavior, matching animations
+const stageInfo=[
+    {
+        title:"INTRODUCTION",
+        text:'Un <span class="r">infostealer</span> est un malware spécialisé dans le <span class="y">vol silencieux</span> de données personnelles : mots de passe, cookies, cartes bancaires, wallets crypto.<br><br>Voyons son fonctionnement étape par étape.'
+    },
+    {
+        title:"ÉTAPE 1: INFECTION",
+        text:'La victime exécute <span class="y">elle-même</span> le malware via :<br>• <span class="r">Crack/Keygen</span> piégé téléchargé<br>• <span class="r">Pièce jointe</span> email (facture.exe, document.scr)<br>• <span class="r">Faux site</span> imitant un logiciel légitime<br><br>Le stealer se lance, récupère sa <span class="b">configuration</span> depuis le C2, puis passe à l\'action.'
+    },
+    {
+        title:"ÉTAPE 2: FURTIVITÉ (AV vs EDR)",
+        text:'Le stealer ne fait que <span class="g">LIRE des fichiers</span> existants. Pas de chiffrement, pas d\'injection, pas de modification.<br><br><span class="r">Antivirus classique</span> : ne voit rien d\'anormal, ce comportement est identique à Chrome ou Word.<br><br><span class="g">EDR</span> : plus de chances de détecter grâce à l\'analyse comportementale (accès aux fichiers sensibles, connexion réseau suspecte).'
+    },
+    {
+        title:"ÉTAPE 3: COLLECTE",
+        text:'Le stealer parcourt les navigateurs et applications :<br>• <span class="r">Login Data</span> → mots de passe stockés (SQLite)<br>• <span class="r">Cookies</span> → sessions actives = bypass 2FA<br>• <span class="r">Web Data</span> → cartes bancaires enregistrées<br>• <span class="r">Wallets</span> → clés crypto (Metamask, Exodus...)<br><br>Tout est copié en mémoire en quelques <span class="y">secondes</span>.'
+    },
+    {
+        title:"ÉTAPE 4: EXFILTRATION",
+        text:'Les données collectées sont :<br>1. <span class="y">Compressées</span> en archive ZIP<br>2. <span class="y">Chiffrées</span> en AES<br>3. <span class="y">Envoyées</span> au C2 via simple requête HTTPS POST<br><br>Pour le firewall, c\'est du trafic web normal. <span class="r">Indétectable</span> sans inspection SSL.'
+    },
+    {
+        title:"ÉTAPE 5: MONÉTISATION",
+        text:'L\'attaquant exploite les données :<br>• <span class="p">Revente</span> sur Genesis, 2easy, Telegram (3€ à 500€/log)<br>• <span class="y">Fraude</span> directe avec les CB volées<br>• <span class="b">Account takeover</span> grâce aux cookies de session<br>• <span class="r">Pivot entreprise</span> si compte professionnel compromis<br><br>Temps total : infection → vente = <span class="r">quelques heures</span>.'
+    },
+    {
+        title:"COMMENT SE PROTÉGER ?",
+        text:'<span class="g">✓ Pas de cracks/keygens</span> - première source d\'infection<br><span class="g">✓ Gestionnaire de MDP externe</span> - pas dans le navigateur<br><span class="g">✓ 2FA matériel</span> (Yubikey) - cookies inutiles sans la clé<br><span class="g">✓ EDR</span> plutôt qu\'un simple antivirus<br><span class="g">✓ Ne pas sauvegarder les CB</span> dans le navigateur<br><span class="g">✓ Vigilance emails</span> - pièces jointes suspectes'
+    }
+];
+
+// Nav
+function updateUI(){
+    document.querySelectorAll('.stage-pill').forEach(p=>{
+        const s=parseInt(p.dataset.stage);
+        p.classList.remove('active','done');
+        if(s===currentStage)p.classList.add('active');
+        else if(s<currentStage)p.classList.add('done');
+    });
+    document.getElementById('infoTitle').textContent=stageInfo[currentStage].title;
+    document.getElementById('infoText').innerHTML=stageInfo[currentStage].text;
+    document.getElementById('btnPrev').disabled=(currentStage===0);
+    document.getElementById('btnNext').disabled=(currentStage===stageInfo.length-1);
+}
+function goToStage(s){
+    if(s>=0&&s<stageInfo.length){
+        currentStage=s;
+        stageTime=0;
+        particles=[];
+        packets=[];
+        glitchEffect=0;
+        updateUI();
+    }
+}
+document.getElementById('btnPrev').addEventListener('click',function(){goToStage(currentStage-1);});
+document.getElementById('btnNext').addEventListener('click',function(){goToStage(currentStage+1);});
+document.getElementById('btnReset').addEventListener('click',function(){goToStage(0);});
+document.querySelectorAll('.stage-pill').forEach(p=>p.addEventListener('click',function(){goToStage(parseInt(p.dataset.stage));}));
+
+updateUI();
+render();
+</script>
+</body>
+</html>
